@@ -19,8 +19,8 @@ The repository is planned to cover:
 - local and remote model/provider adapters;
 - model/provider capability discovery where useful;
 - routing between suitable intelligence providers;
-- bounded task coordination and execution metadata;
-- scheduling or multi-agent execution only when an explicit Issue establishes the required contract;
+- bounded task coordination and execution metadata within intelligence requests;
+- scheduling or multi-agent execution only when an explicit Issue establishes the required contract, without taking ownership of persistent Agent identity or memory;
 - health, diagnostics, and capability reporting appropriate to the intelligence boundary.
 
 The exact transport, provider set, persistence model, runtime language, and public tool surface are not defined by this initial repository setup.
@@ -52,9 +52,9 @@ Intelligence MCP may execute requests for the Agent, but must not silently becom
 
 ### FLAMORIS Generation MCP
 
-[flamoris-generation-mcp](https://github.com/flamoris-jp/flamoris-generation-mcp) owns generative-media workflows, jobs, and assets.
+[flamoris-generation-mcp](https://github.com/flamoris-jp/flamoris-generation-mcp) owns generative-media and closely related media-analysis workflows, jobs, and assets.
 
-Intelligence MCP is deliberately separate from image, video, music, and voice generation.
+Intelligence MCP is deliberately separate from image, video, music, voice, and media-domain analysis that participates in Generation MCP's workflow/job/asset lifecycle.
 
 ### Product repositories
 
@@ -138,7 +138,7 @@ local modelとremote providerの違いをadapterの内側へ閉じ込め、FLAMO
 - **Conversation / Memory / Prompt / Agent policy**  
   → `flamoris-ai-agent`
 
-- **画像・動画・音楽・音声のgeneration workflow / job / asset**  
+- **画像・動画・音楽・音声のgeneration、および密接なmedia-domain analysisのworkflow / job / asset**  
   → `flamoris-generation-mcp`
 
 - **2D / Cutwork / Kachinco / Studioなどの制作データ**  
