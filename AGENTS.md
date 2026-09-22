@@ -17,7 +17,7 @@ Intelligence MCP may own:
 - provider adapters;
 - provider/model capability metadata;
 - routing decisions;
-- bounded execution/task metadata needed to fulfill intelligence requests;
+- bounded execution/task metadata needed to fulfill intelligence requests, including limited coordination within a request;
 - intelligence-specific health and diagnostics.
 
 Intelligence MCP must not silently become the authority for:
@@ -77,7 +77,7 @@ Intelligence MCP should accept only the context needed for execution and should 
 
 ### `flamoris-generation-mcp`
 
-Owns generative-media execution, workflows, jobs, and assets.
+Owns generative-media and closely related media-analysis execution, workflows, jobs, and assets.
 
 Keep the two MCP surfaces conceptually parallel but domain-separated.
 
