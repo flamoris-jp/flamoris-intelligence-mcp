@@ -6,7 +6,7 @@ These instructions apply to the entire repository.
 
 This repository is for the FLAMORIS MCP-native intelligence gateway.
 
-**Current status:** the repository is initialized for architecture and policy only. Do not describe runtime features, transports, providers, or tools as implemented until code and tests exist.
+**Current status:** Phase 1 implements a Python MCP runtime, configured model/capability discovery, and bounded synchronous llama.cpp inference. See `docs/CONTRACT.md`. Live deployment acceptance is separate from mock/CI validation. Do not describe future providers or downstream integration as implemented.
 
 ## Core authority
 
@@ -160,3 +160,4 @@ Do not add third-party code, models, weights, datasets, prompts, media, generate
 FLAMORIS does not provide guaranteed individual support.
 
 Repository documentation, Issues, tests, logs, and source code are the primary support references. AI-assisted self-support is encouraged.
+
