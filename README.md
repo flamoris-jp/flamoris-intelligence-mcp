@@ -48,6 +48,15 @@ outside Phase 1. Do not publish this listener through an unauthenticated tunnel.
 SDK Host/Origin checks stay enabled. One process means one shared admission limit;
 multiple workers are not a shared GPU reservation system.
 
+## Docker (Linux)
+
+A multi-stage Python 3.12 image and `compose.yaml` provide a non-root, read-only
+deployment without GPU libraries or model weights. Linux host networking preserves
+the loopback-only listener while reaching the independently managed host provider.
+The container healthcheck verifies MCP discovery independently of provider readiness.
+See [Docker deployment and live acceptance](docs/DOCKER.md) for setup, network/trust
+boundaries, configuration, update/restart, and the real GPT-OSS smoke procedure.
+
 ## Configuration
 
 All variables below use the prefix `FLAMORIS_INTELLIGENCE_`. No `.env` file is
@@ -102,6 +111,10 @@ health, finish reason, and success/failure in Issue #3; exclude hostnames, crede
 and private prompts. Mock tests do not establish real GPT-OSS quality or deployment
 readiness. A live smoke has not been performed by this implementation's CI.
 
+To check an already running HTTP container, use
+`python examples/smoke.py --url http://127.0.0.1:8767/mcp --model gpt-oss-20b`.
+Both modes check health, models, and capabilities before inference.
+
 ## Development
 
 ```sh
@@ -116,6 +129,8 @@ Tests exercise validation, HTTP errors, resource bounds, cancellation, admission
 real stdio/HTTP MCP clients, protocol negotiation, and installed-package behavior.
 The official MCP SDK 2.x owns transport infrastructure. No .NET package is required.
 No generic FLAMORIS MCP Python package is vendored here.
+CI also builds the production image and verifies non-root/read-only startup,
+provider-independent health, HTTP discovery, and restart without a GPU or weights.
 
 ## Ecosystem boundaries
 
@@ -242,4 +257,3 @@ Hub/Studioへの組み込みは契約のレビュー・マージ後です。
 このリポジトリのコードとドキュメントは、明記がない限りApache License 2.0です。
 
 AI model、model weights、dataset、provider-hosted asset、第三者由来prompt、生成outputなどには別のライセンスや利用条件が適用される場合があります。それぞれ確認してください。
-
