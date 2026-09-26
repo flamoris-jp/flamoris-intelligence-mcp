@@ -90,6 +90,8 @@ class Settings(StrictModel):
         float_fields = {"timeout_seconds", "health_timeout_seconds"}
         try:
             for name in cls.model_fields:
+                if overrides.get(name) is not None:
+                    continue
                 raw = os.environ.get("FLAMORIS_INTELLIGENCE_" + name.upper())
                 if raw is None:
                     continue

@@ -302,6 +302,9 @@ def test_config_env_and_sanitized_failure(monkeypatch):
     monkeypatch.setenv("FLAMORIS_INTELLIGENCE_HTTP_PORT", "9999")
     assert Settings.from_env(http_port=8888).http_port == 8888
     assert Settings.from_env().models[0].id == "local"
+    monkeypatch.setenv("FLAMORIS_INTELLIGENCE_HTTP_PORT", "invalid")
+    assert Settings.from_env(http_port=8888).http_port == 8888
+    monkeypatch.delenv("FLAMORIS_INTELLIGENCE_HTTP_PORT")
     monkeypatch.setenv("FLAMORIS_INTELLIGENCE_PROVIDER_URL", "http://user:SECRET@host")
     with pytest.raises(ValueError) as error:
         Settings.from_env()
@@ -318,3 +321,72 @@ def test_no_external_listener_or_duplicate_models():
                 ModelEntry(id="same", provider_model="b"),
             )
         )
+
+
+@pytest.mark.parametrize(
+    "action,code",
+    [("overflow", "response_limit"), ("timeout", "provider_timeout"), ("cancel", None)],
+)
+async def test_stream_body_bounds_and_closure(action, code):
+    entered = asyncio.Event()
+    closed = asyncio.Event()
+    calls = []
+
+    class Body(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            entered.set()
+            if action == "overflow":
+                for _ in range(20):
+                    yield b"x" * 1024
+            else:
+                await asyncio.Event().wait()
+                yield b"unreachable"
+
+        async def aclose(self):
+            closed.set()
+
+    def handler(req):
+        calls.append(req)
+        return httpx.Response(200, stream=Body())  # No Content-Length to trust.
+
+    settings = Settings(
+        max_response_bytes=1024,
+        max_output_bytes=256,
+        timeout_seconds=0.05 if action == "timeout" else 5,
+    )
+    provider = LlamaCppProvider(settings, httpx.MockTransport(handler))
+    task = asyncio.create_task(provider.infer(InferenceRequest(**request()), "alias"))
+    try:
+        await asyncio.wait_for(entered.wait(), 1)
+        if action == "cancel":
+            task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+        else:
+            with pytest.raises(IntelligenceError) as error:
+                await task
+            assert error.value.code == code
+        assert closed.is_set()
+        assert len(calls) == 1
+    finally:
+        await provider.close()
+
+
+async def test_health_probe_limit_and_cancellation():
+    entered = asyncio.Event()
+
+    class Waiting(FakeProvider):
+        async def health(self):
+            entered.set()
+            await asyncio.Event().wait()
+
+    service = IntelligenceService(Settings(), Waiting())
+    task = asyncio.create_task(service.health())
+    await entered.wait()
+    assert (await service.health())["providers"][0]["error"]["code"] == "busy"
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert not service.health_active
+    service.provider = FakeProvider()
+    assert (await service.health())["providers"][0]["available"]
