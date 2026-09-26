@@ -154,6 +154,11 @@ can reach it can invoke inference. A future Hub or authenticated proxy must enfo
 external caller authentication/authorization and compatible Host/Origin forwarding.
 Do not expose the loopback listener through an unauthenticated tunnel.
 
+The [Docker deployment](DOCKER.md) uses Linux host networking, preserving this
+loopback-only contract. Its healthcheck negotiates MCP and checks tool discovery
+without calling the provider. Container health therefore remains independent of
+provider availability; use `system.health` for that separate diagnostic.
+
 Provider HTTP uses only the configured trusted base URL, no redirects or environment
 proxies, and identity encoding to avoid compressed-body expansion. Received bytes and
 final UTF-8 output are bounded independently. For stdio the SDK parses input before
