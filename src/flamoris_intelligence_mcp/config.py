@@ -81,7 +81,11 @@ class Settings(StrictModel):
     def from_env(cls, **overrides):
         values = {}
         integer_fields = {
-            "max_input_bytes", "max_response_bytes", "max_output_bytes", "max_concurrency", "http_port"
+            "max_input_bytes",
+            "max_response_bytes",
+            "max_output_bytes",
+            "max_concurrency",
+            "http_port",
         }
         float_fields = {"timeout_seconds", "health_timeout_seconds"}
         try:
