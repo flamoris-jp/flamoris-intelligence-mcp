@@ -1,7 +1,7 @@
 # Docker deployment
 
 This image runs **Intelligence MCP only**. It contains no llama.cpp, weights, GPU
-libraries, Agent state, media assets, or runtime activation logic. LIME Manager
+libraries, Agent state, media assets, or runtime activation logic. [GPU Node Manager](https://github.com/flamoris-jp/flamoris-gpu-node-manager)
 remains the authority for the independently managed LLM runtime.
 
 ## Networking decision
@@ -107,7 +107,7 @@ unhealthy process; the restart policy covers process exits.
 ## Live LIME acceptance after merge/deployment
 
 Do not infer live readiness from CI or an old setup document. The operator should
-use LIME Manager to activate `llm` and confirm the current llama.cpp runtime is
+use GPU Node Manager to activate `llm` and confirm the current llama.cpp runtime is
 READY. This container never calls systemd or performs activation.
 
 After starting the container, install this repository's package in a separate
@@ -132,7 +132,7 @@ and CI; it cannot satisfy real GPT-OSS acceptance.
 Record only commit/image identifier, public model ID, process/provider health,
 success, finish reason, elapsed time, and token usage in Issue #3. Exclude private
 addresses, credentials, model paths, and prompt/response contents. Confirm runtime
-ownership remains with LIME Manager. Close #3 only after this live acceptance;
+ownership remains with GPU Node Manager. Close #3 only after this live acceptance;
 Docker/mock CI does not perform it.
 
 For an update, review the new source, rebuild, and use `docker compose up -d --wait`.

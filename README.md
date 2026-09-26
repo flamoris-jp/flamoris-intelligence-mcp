@@ -87,7 +87,7 @@ Default model registry (1–16 unique IDs allowed):
 Set `provider_model` to the alias actually served by your llama.cpp deployment.
 It is passed only inside the adapter, never returned as a filesystem path in
 public discovery. Context/output limits must match the deployed model. Public
-model selection never activates/switches models or GPU runtimes. Use LIME Manager
+model selection never activates/switches models or GPU runtimes. Use [GPU Node Manager](https://github.com/flamoris-jp/flamoris-gpu-node-manager)
 for the `llm` runtime lifecycle; this MCP only reports availability and executes.
 
 Calls send the caller's input/instruction to the configured provider. Remote URLs
@@ -153,7 +153,7 @@ These are boundaries, not mandatory layers.
 
 ### FLAMORIS AI Agent
 
-[flamoris-ai-agent](https://github.com/flamoris-jp/flamoris-ai-agent) is the planned authority for conversations, memory, knowledge context, prompts, tools, and persistent agent behavior.
+[flamoris-ai-agent](https://github.com/flamoris-jp/flamoris-ai-agent) is the persistent Agent authority for conversations, memory, knowledge context, prompts, tools, and long-lived agent behavior. Its bounded Agent MCP surface is already implemented; broader Agent capabilities continue to evolve there.
 
 Intelligence MCP may execute requests for the Agent, but must not silently become a second owner of Agent memory or conversation state.
 
