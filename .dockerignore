@@ -1,0 +1,10 @@
+# Allowlist: never send local credentials, weights, tests, or state to the builder.
+*
+!pyproject.toml
+!README.md
+!LICENSE
+!docker-requirements.txt
+!src/
+!src/**
+**/__pycache__/
+**/*.py[cod]
