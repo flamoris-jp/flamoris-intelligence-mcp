@@ -3,17 +3,22 @@
 import argparse
 import json
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Annotated, Any
 
 import httpx
 from mcp.server import MCPServer
 from mcp.types import CallToolResult, TextContent, ToolAnnotations
+from pydantic import Field
 
 from . import __version__
 from .config import Settings
-from .contracts import CAPABILITIES, IntelligenceError
+from .contracts import CAPABILITIES, InferenceRequest, IntelligenceError
 from .llamacpp import LlamaCppProvider
 from .service import IntelligenceService
+
+# Publish a concrete schema while keeping validation in the service, where errors
+# are normalized without echoing private prompt values from SDK validation errors.
+RequestArgument = Annotated[Any, Field(json_schema_extra=InferenceRequest.model_json_schema())]
 
 
 def tool_result(data: dict) -> CallToolResult:
@@ -85,7 +90,7 @@ def create_server(
             readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True
         ),
     )
-    async def execute(request: dict[str, Any]) -> CallToolResult:
+    async def execute(request: RequestArgument) -> CallToolResult:
         """Execute once with no persistence/retry. request: model_id, input, optional instruction,
         capability_id (text.generate/reasoning.generate/code.generate), max_output_tokens (1024),
         temperature (0.7), timeout_seconds. Inputs and outputs go to the configured provider only.

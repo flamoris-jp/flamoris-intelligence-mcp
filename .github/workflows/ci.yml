@@ -1,0 +1,36 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e '.[dev]'
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: python -m pytest -q
+      - run: python -m build
+      - name: Installed wheel smoke
+        shell: bash
+        run: |
+          python -m venv /tmp/intelligence-wheel
+          /tmp/intelligence-wheel/bin/python -m pip install dist/*.whl
+          cd /tmp
+          /tmp/intelligence-wheel/bin/flamoris-intelligence-mcp --help
+          /tmp/intelligence-wheel/bin/python -c 'from flamoris_intelligence_mcp.server import create_server; assert create_server()'
