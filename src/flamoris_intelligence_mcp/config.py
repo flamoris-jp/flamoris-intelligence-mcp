@@ -13,6 +13,7 @@ from .contracts import StrictModel
 
 class ModelEntry(StrictModel):
     id: str = Field(min_length=1, max_length=128, pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
+    provider_id: Literal["llamacpp", "openai"] = "llamacpp"
     provider_model: str = Field(min_length=1, max_length=512)
     context_tokens: int = Field(default=32768, ge=1024, le=1048576)
     max_output_tokens: int = Field(default=4096, ge=1, le=32768)
@@ -25,6 +26,10 @@ class ModelEntry(StrictModel):
 
 
 class Settings(StrictModel):
+    openai_api_key: SecretStr | None = Field(default=None, repr=False)
+    openai_input_usd_per_million: float = Field(default=0, ge=0, allow_inf_nan=False)
+    openai_output_usd_per_million: float = Field(default=0, ge=0, allow_inf_nan=False)
+    openai_max_request_usd: float = Field(default=0, ge=0, le=100, allow_inf_nan=False)
     provider_url: str = "http://127.0.0.1:8081"
     provider_api_key: SecretStr | None = Field(default=None, repr=False)
     models: tuple[ModelEntry, ...] = (ModelEntry(id="gpt-oss-20b", provider_model="gpt-oss-20b"),)
@@ -75,6 +80,18 @@ class Settings(StrictModel):
             raise ValueError("Configure 1 to 16 unique model IDs")
         if self.max_output_bytes > self.max_response_bytes:
             raise ValueError("Output bytes must not exceed response bytes")
+        if any(m.provider_id == "openai" for m in self.models):
+            if not self.openai_api_key or not self.openai_api_key.get_secret_value().strip():
+                raise ValueError("OpenAI requires a configured credential")
+            if (
+                min(
+                    self.openai_input_usd_per_million,
+                    self.openai_output_usd_per_million,
+                    self.openai_max_request_usd,
+                )
+                <= 0
+            ):
+                raise ValueError("OpenAI requires operator pricing and a request cost ceiling")
         return self
 
     @classmethod
@@ -87,7 +104,13 @@ class Settings(StrictModel):
             "max_concurrency",
             "http_port",
         }
-        float_fields = {"timeout_seconds", "health_timeout_seconds"}
+        float_fields = {
+            "timeout_seconds",
+            "health_timeout_seconds",
+            "openai_input_usd_per_million",
+            "openai_output_usd_per_million",
+            "openai_max_request_usd",
+        }
         try:
             for name in cls.model_fields:
                 if overrides.get(name) is not None:
@@ -104,7 +127,7 @@ class Settings(StrictModel):
                     if not isinstance(entries, list):
                         raise ValueError
                     values[name] = tuple(ModelEntry.model_validate(entry) for entry in entries)
-                elif name == "provider_api_key":
+                elif name in {"provider_api_key", "openai_api_key"}:
                     values[name] = SecretStr(raw)
                 else:
                     values[name] = raw

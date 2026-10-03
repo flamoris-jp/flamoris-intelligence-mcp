@@ -10,6 +10,8 @@ FLAMORIS Intelligence MCP is intended to expose language, reasoning, coding, and
 
 It is not the persistent Agent, not the generative-media gateway, and not the owner of FLAMORIS product documents.
 
+See [assistant settings and model integration](docs/OPENAI_RESPONSES.md) for the opt-in extension and migration gates.
+
 ## Phase 1
 
 The runtime exposes six tools: `system.health`, `capabilities.list/get`,
