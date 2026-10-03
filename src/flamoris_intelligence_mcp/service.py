@@ -3,6 +3,7 @@
 import asyncio
 import time
 import uuid
+from decimal import Decimal
 
 from pydantic import ValidationError
 
@@ -15,6 +16,8 @@ class IntelligenceService:
     def __init__(self, settings: Settings, provider: Provider):
         self.settings = settings
         self.provider = provider
+        self.providers = provider if isinstance(provider, dict) else {"llamacpp": provider}
+        self.active_by_provider = {name: 0 for name in self.providers}
         self.models = {model.id: model for model in settings.models}
         self.active = 0
         self.health_active = False
@@ -25,7 +28,7 @@ class IntelligenceService:
         model = self.models[model_id]
         return {
             "model_id": model.id,
-            "provider_id": "llamacpp",
+            "provider_id": model.provider_id,
             "capability_ids": list(CAPABILITIES),
             "context_tokens": model.context_tokens,
             "max_output_tokens": model.max_output_tokens,
@@ -43,26 +46,40 @@ class IntelligenceService:
         }
 
     async def health(self):
-        provider = {"provider_id": "llamacpp", "available": False}
+        async def probe(name, adapter):
+            value = {"provider_id": name, "available": False}
+            try:
+                async with asyncio.timeout(self.settings.health_timeout_seconds):
+                    await adapter.health()
+                value["available"] = True
+            except TimeoutError:
+                value["error"] = IntelligenceError("provider_timeout").public()
+            except IntelligenceError as exc:
+                value["error"] = exc.public()
+            except Exception:
+                value["error"] = IntelligenceError("provider_unavailable").public()
+            return value
+
         if self.health_active:
-            provider["error"] = IntelligenceError("busy").public()
+            providers = [
+                {
+                    "provider_id": name,
+                    "available": False,
+                    "error": IntelligenceError("busy").public(),
+                }
+                for name in self.providers
+            ]
         else:
             self.health_active = True
             try:
-                async with asyncio.timeout(self.settings.health_timeout_seconds):
-                    await self.provider.health()
-                provider["available"] = True
-            except TimeoutError:
-                provider["error"] = IntelligenceError("provider_timeout").public()
-            except IntelligenceError as exc:
-                provider["error"] = exc.public()
+                providers = await asyncio.gather(*(probe(n, p) for n, p in self.providers.items()))
             finally:
                 self.health_active = False
         return {
             "healthy": True,
             "version": __version__,
             "active_requests": self.active,
-            "providers": [provider],
+            "providers": providers,
         }
 
     def validate(self, raw: dict) -> InferenceRequest:
@@ -93,28 +110,43 @@ class IntelligenceService:
         try:
             request = self.validate(raw)
             # No await between test/reservation; all tools share one event loop.
-            if self.active >= self.settings.max_concurrency:
+            provider_id = self.models[request.model_id].provider_id
+            if provider_id not in self.providers:
+                raise IntelligenceError("provider_unavailable")
+            if self.active_by_provider[provider_id] >= self.settings.max_concurrency:
                 raise IntelligenceError("busy")
             self.active += 1
+            self.active_by_provider[provider_id] += 1
             try:
                 async with asyncio.timeout(
                     request.timeout_seconds or self.settings.timeout_seconds
                 ):
-                    result = await self.provider.infer(
+                    result = await self.providers[provider_id].infer(
                         request, self.models[request.model_id].provider_model
                     )
             except TimeoutError:
                 raise IntelligenceError("provider_timeout") from None
             finally:
                 self.active -= 1
+                self.active_by_provider[provider_id] -= 1
+            cost = {}
+            if provider_id == "openai" and result.usage is not None:
+                estimated = (
+                    Decimal(result.usage.input_tokens)
+                    * Decimal(str(self.settings.openai_input_usd_per_million))
+                    + Decimal(result.usage.output_tokens)
+                    * Decimal(str(self.settings.openai_output_usd_per_million))
+                ) / Decimal(1000000)
+                cost["estimated_cost_usd"] = str(estimated)
             return {
                 "ok": True,
                 "execution_id": execution_id,
-                "provider_id": "llamacpp",
+                "provider_id": provider_id,
                 "model_id": request.model_id,
                 "capability_id": request.capability_id,
                 "elapsed_ms": round((time.monotonic() - started) * 1000),
                 **result.model_dump(),
+                **cost,
             }
         except IntelligenceError as exc:
             return {"ok": False, "execution_id": execution_id, "error": exc.public()}

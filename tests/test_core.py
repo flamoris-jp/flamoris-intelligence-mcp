@@ -83,7 +83,15 @@ async def test_normalization_and_no_retained_context():
     assert result["usage"] is None
     assert provider.calls[0][1] == "served-alias"
     assert provider.calls[0][0].instruction == "explicit policy"
-    assert set(vars(service)) == {"settings", "provider", "models", "active", "health_active"}
+    assert set(vars(service)) == {
+        "settings",
+        "provider",
+        "providers",
+        "active_by_provider",
+        "models",
+        "active",
+        "health_active",
+    }
     assert "provider_model" not in service.model("gpt-oss-20b")
 
 
@@ -108,7 +116,7 @@ async def test_busy_cancellation_and_capacity_release():
         await running
     assert cancelled.is_set()
     assert service.active == 0
-    service.provider = FakeProvider()
+    service.providers["llamacpp"] = FakeProvider()
     assert (await service.execute(request()))["ok"]
 
 
@@ -125,7 +133,7 @@ async def test_service_deadline_and_exception_sanitization():
         async def infer(self, req, model):
             raise RuntimeError("private prompt and secret credential")
 
-    service.provider = Broken()
+    service.providers["llamacpp"] = Broken()
     result = await service.execute(request())
     assert result["error"]["code"] == "internal_error"
     assert "private" not in json.dumps(result)
@@ -388,5 +396,5 @@ async def test_health_probe_limit_and_cancellation():
     with pytest.raises(asyncio.CancelledError):
         await task
     assert not service.health_active
-    service.provider = FakeProvider()
+    service.providers["llamacpp"] = FakeProvider()
     assert (await service.health())["providers"][0]["available"]

@@ -14,6 +14,7 @@ from . import __version__
 from .config import Settings
 from .contracts import CAPABILITIES, InferenceRequest, IntelligenceError
 from .llamacpp import LlamaCppProvider
+from .openai_provider import OpenAIProvider
 from .service import IntelligenceService
 
 # Publish a concrete schema while keeping validation in the service, where errors
@@ -33,15 +34,20 @@ def create_server(
     settings: Settings | None = None, *, transport: httpx.AsyncBaseTransport | None = None
 ) -> MCPServer:
     settings = settings or Settings.from_env()
-    provider = LlamaCppProvider(settings, transport)
-    service = IntelligenceService(settings, provider)
+    providers = {}
+    if any(m.provider_id == "llamacpp" for m in settings.models):
+        providers["llamacpp"] = LlamaCppProvider(settings, transport)
+    if any(m.provider_id == "openai" for m in settings.models):
+        providers["openai"] = OpenAIProvider(settings, transport)
+    service = IntelligenceService(settings, providers)
 
     @asynccontextmanager
     async def lifespan(_server):
         try:
             yield None
         finally:
-            await provider.close()
+            for provider in providers.values():
+                await provider.close()
 
     server = MCPServer(
         "FLAMORIS Intelligence", version=__version__, lifespan=lifespan, log_level="WARNING"
@@ -80,9 +86,20 @@ def create_server(
     async def model(model_id: str) -> CallToolResult:
         """Get one configured model and its limits without exposing provider paths."""
         try:
-            return tool_result(service.model(model_id))
+            descriptor = service.model(model_id)
+            if descriptor["provider_id"] == "openai":
+                import asyncio
+
+                async with asyncio.timeout(settings.health_timeout_seconds):
+                    await providers["openai"].health_model(service.models[model_id].provider_model)
+                descriptor["available"] = True
+            return tool_result(descriptor)
         except IntelligenceError as exc:
             return tool_result({"ok": False, "error": exc.public()})
+        except TimeoutError:
+            return tool_result(
+                {"ok": False, "error": IntelligenceError("provider_timeout").public()}
+            )
 
     @server.tool(
         name="inference.execute",
