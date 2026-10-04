@@ -4,21 +4,22 @@ build-backend = "hatchling.build"
 
 [project]
 name = "flamoris-intelligence-mcp"
-version = "0.1.0"
-description = "Bounded provider-neutral intelligence over MCP"
+version = "0.2.0"
+description = "Bounded intelligence provider adapters with an optional external MCP facade"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.11"
-dependencies = ["mcp>=2.2,<3", "httpx>=0.28,<1", "httpx2>=2.13,<3", "pydantic>=2.11,<3"]
+dependencies = ["httpx>=0.28,<1", "pydantic>=2.11,<3"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<10", "pytest-asyncio>=1,<2", "ruff>=0.14,<1", "build>=1.2,<2"]
+mcp = ["mcp>=2.2,<3", "httpx2>=2.13,<3"]
+dev = ["mcp>=2.2,<3", "httpx2>=2.13,<3", "pytest>=8,<10", "pytest-asyncio>=1,<2", "ruff>=0.14,<1", "build>=1.2,<2"]
 
 [project.scripts]
 flamoris-intelligence-mcp = "flamoris_intelligence_mcp.server:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/flamoris_intelligence_mcp"]
+packages = ["src/flamoris_intelligence", "src/flamoris_intelligence_mcp"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

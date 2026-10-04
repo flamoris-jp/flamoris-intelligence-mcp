@@ -1,3 +1,3 @@
-"""Stateless intelligence execution; no Agent or runtime ownership."""
+"""External intelligence MCP facade; provider ownership is transport independent."""
 
-__version__ = "0.1.0"
+from flamoris_intelligence._version import __version__  # noqa: F401

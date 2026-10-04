@@ -4,17 +4,17 @@ Provider-neutral external intelligence MCP facade for FLAMORIS. Part of [FLAMORI
 
 ## Role and current implementation
 
-Target external path: **ChatGPT -> MCP Hub -> Intelligence MCP -> approved internal intelligence capability**. Internal Studio, Agent and AI Runtime callers use non-MCP execution interfaces in the corrected architecture. This is a target boundary: existing callers have not been migrated by this documentation PR.
+Target external path: **ChatGPT -> MCP Hub -> Intelligence MCP -> approved internal intelligence capability**. Internal Studio, Agent and AI Runtime callers use non-MCP execution interfaces in the corrected architecture. The importable `flamoris_intelligence` boundary now supplies bounded non-MCP execution; consumer deployments are migrated separately.
 
 The current Python implementation exposes six tools: `system.health`, `capabilities.list/get`, `models.list/get` and synchronous `inference.execute`. It includes the llama.cpp adapter and configured opt-in [OpenAI Responses adapter](docs/OPENAI_RESPONSES.md). It stores no durable Agent conversation/memory and does not start/stop GPU runtimes. Actual provider/model availability and deployment acceptance are separate from code and offline tests.
 
-[AI #18](https://github.com/flamoris-jp/flamoris-ai/issues/18) and [local #10](https://github.com/flamoris-jp/flamoris-intelligence-mcp/issues/10) supersede the old internal-gateway architecture. The first later implementation task is removal of internal MCP coupling, not deletion of this external facade or automatic duplication of provider adapters. No code, tool schema or live configuration changes in this documentation pass. Generation Controller remains unimplemented.
+[AI #18](https://github.com/flamoris-jp/flamoris-ai/issues/18) and [local #10](https://github.com/flamoris-jp/flamoris-intelligence-mcp/issues/10) supersede the old internal-gateway architecture. The shared provider adapters and validation now live behind a [non-MCP execution contract](docs/INTERNAL_EXECUTION.md). External schemas and tools remain unchanged; no live configuration or provider deployment was changed. Generation Controller remains unimplemented.
 
 ## Contracts and boundaries
 
 Read [CONTRACT.md](docs/CONTRACT.md) for current request/result schemas, limits, errors, cancellation and trust. [OPENAI_RESPONSES.md](docs/OPENAI_RESPONSES.md) records the current remote adapter/configuration, not a mandate that Agent calls MCP internally.
 
-Agent owns optional personality, conversation/memory, principal/session and context/export policy. An external personality capability may reach Agent through a separately reviewed internal call; raw inference does not require it. Internal execution adapter ownership is decided against actual callers, not by creating a new central gateway by default.
+Agent owns optional personality, conversation/memory, principal/session and context/export policy. An external personality capability may reach Agent through a separately reviewed internal call; raw inference does not require it. Agent and Studio reuse the importable stateless provider boundary. This adds no central network gateway and does not move user conversation or authorization state into the shared adapters.
 
 Generation MCP is a separate external facade. Generation-domain requests, jobs, references and assets do not belong here; future Controller ownership is deferred under AI #18. ComfyWorkFlow means ComfyUI graph/JSON, ExecuteFlow means Runtime inference flow, and the existing compiled ExecutionPlan remains distinct. None is an obligatory layer for an ordinary API call.
 
@@ -22,12 +22,12 @@ Products retain their own document/editing state. GPU Node Manager retains host-
 
 ## Install and run: existing implementation reference
 
-These are current package commands, not rollout instructions for the architecture correction. Python 3.11+ is required. The MCP process needs no GPU/model weights; its provider must be independently configured and reachable.
+External MCP entrypoints require the `[mcp]` extra; internal consumers install the base distribution only. These package commands are not live cutover instructions. Python 3.11+ is required. The MCP process needs no GPU/model weights; its provider must be independently configured and reachable.
 
 ```sh
 python -m venv .venv
 # Activate the environment before installing.
-python -m pip install -e '.[dev]'
+python -m pip install -e '.[dev,mcp]'
 flamoris-intelligence-mcp
 ```
 
@@ -39,7 +39,7 @@ flamoris-intelligence-mcp --transport streamable-http --host 127.0.0.1 --port 87
 
 `python -m flamoris_intelligence_mcp` accepts the same options. CLI settings override environment. HTTP has no application authentication; retain loopback/SDK Host-Origin checks and a separately reviewed authenticated boundary for remote access. Do not publish an unauthenticated listener. One process has a shared admission budget; multiple workers do not create a shared GPU reservation.
 
-See [Docker deployment](docs/DOCKER.md) for existing non-root/read-only Linux deployment and acceptance. Container liveness does not establish provider readiness. No deployment is performed by this PR.
+See [Docker deployment](docs/DOCKER.md) for existing non-root/read-only Linux deployment and acceptance. Container liveness does not establish provider readiness. No live deployment is performed by this implementation change.
 
 ## Current configuration
 
@@ -80,13 +80,13 @@ ruff format --check .
 python -m build
 ```
 
-Normal tests use fakes and do not require GPUs, weights, paid APIs or secrets. Transport, package and container tests do not certify model quality or live readiness. Explicit manual smoke references remain `python examples/smoke.py --model gpt-oss-20b` and `python examples/smoke.py --url http://127.0.0.1:8767/mcp --model gpt-oss-20b`; do not run them as part of this documentation pass. Record actual acceptance in the owning Issue, independently of CI.
+Normal tests use fakes and do not require GPUs, weights, paid APIs or secrets. Transport, package and container tests do not certify model quality or live readiness. Explicit manual smoke references remain `python examples/smoke.py --model gpt-oss-20b` and `python examples/smoke.py --url http://127.0.0.1:8767/mcp --model gpt-oss-20b`; run them only during separately authorized live acceptance. Record actual acceptance in the owning Issue, independently of CI.
 
 ## 日本語
 
-Intelligence MCPはChatGPTがMCP Hub経由で使う外部入口です。Studio/Agent/Runtime内部の共通Gatewayにはしません。現在のMCP実装や呼び出し元は文書だけでは移行されていません。
+Intelligence MCPはChatGPTがMCP Hub経由で使う外部入口です。Studio/Agent/Runtime内部の共通Gatewayにはしません。非MCPの共有実行境界 `flamoris_intelligence` を実装しました。実機の切替は別途行います。
 
-次のIntelligence整備では内部MCP依存を削除する範囲と代替の最小内部契約を先に確認します。外部MCP、既存providerの有効な処理、認可・上限・秘匿・不確定結果の扱いまで消す指示ではありません。Generation Controllerはまだ実装しません。
+共有adapterは順序付きのsystem/user/assistantメッセージ、明示したmodel、上限、固定エラーを扱います。Agent/Studioの認可・会話・外部送信同意は呼び出し元に残します。外部MCP、既存providerの有効な処理、認可・上限・秘匿・不確定結果の扱いまで消す指示ではありません。Generation Controllerはまだ実装しません。
 
 ## Policy and license
 

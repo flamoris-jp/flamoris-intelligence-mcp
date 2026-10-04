@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m pip install -e '.[dev]'
+      - run: python -m pip install -e '.[dev,mcp]'
       - run: ruff check .
       - run: ruff format --check .
       - run: python -m pytest -q
@@ -30,7 +30,19 @@ jobs:
         shell: bash
         run: |
           python -m venv /tmp/intelligence-wheel
-          /tmp/intelligence-wheel/bin/python -m pip install dist/*.whl
+          wheel=(dist/*.whl)
+          /tmp/intelligence-wheel/bin/python -m pip install "${wheel[0]}"
+          /tmp/intelligence-wheel/bin/python - <<'PY'
+          import asyncio
+          import importlib.util
+          from flamoris_intelligence import Settings, create_service
+          assert importlib.util.find_spec('mcp') is None
+          assert importlib.util.find_spec('httpx2') is None
+          service = create_service(Settings())
+          assert service.model('gpt-oss-20b')['provider_id'] == 'llamacpp'
+          asyncio.run(service.close())
+          PY
+          /tmp/intelligence-wheel/bin/python -m pip install "${wheel[0]}[mcp]"
           cd /tmp
           /tmp/intelligence-wheel/bin/flamoris-intelligence-mcp --help
           /tmp/intelligence-wheel/bin/python -c 'from flamoris_intelligence_mcp.server import create_server; assert create_server()'

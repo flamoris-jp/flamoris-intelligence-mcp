@@ -10,12 +10,11 @@ from mcp.server import MCPServer
 from mcp.types import CallToolResult, TextContent, ToolAnnotations
 from pydantic import Field
 
+from flamoris_intelligence import create_service
+
 from . import __version__
 from .config import Settings
 from .contracts import CAPABILITIES, InferenceRequest, IntelligenceError
-from .llamacpp import LlamaCppProvider
-from .openai_provider import OpenAIProvider
-from .service import IntelligenceService
 
 # Publish a concrete schema while keeping validation in the service, where errors
 # are normalized without echoing private prompt values from SDK validation errors.
@@ -34,20 +33,17 @@ def create_server(
     settings: Settings | None = None, *, transport: httpx.AsyncBaseTransport | None = None
 ) -> MCPServer:
     settings = settings or Settings.from_env()
-    providers = {}
-    if any(m.provider_id == "llamacpp" for m in settings.models):
-        providers["llamacpp"] = LlamaCppProvider(settings, transport)
-    if any(m.provider_id == "openai" for m in settings.models):
-        providers["openai"] = OpenAIProvider(settings, transport)
-    service = IntelligenceService(settings, providers)
+    service = create_service(settings, transport=transport)
+
+    def capability_descriptor(capability_id):
+        return {**service.capability(capability_id), "tool": "inference.execute"}
 
     @asynccontextmanager
     async def lifespan(_server):
         try:
             yield None
         finally:
-            for provider in providers.values():
-                await provider.close()
+            await service.close()
 
     server = MCPServer(
         "FLAMORIS Intelligence", version=__version__, lifespan=lifespan, log_level="WARNING"
@@ -67,13 +63,13 @@ def create_server(
     @server.tool(name="capabilities.list", annotations=read_only)
     async def capabilities() -> CallToolResult:
         """List configured operations; discovery does not activate or probe a runtime."""
-        return tool_result({"capabilities": [service.capability(c) for c in CAPABILITIES]})
+        return tool_result({"capabilities": [capability_descriptor(c) for c in CAPABILITIES]})
 
     @server.tool(name="capabilities.get", annotations=read_only)
     async def capability(capability_id: str) -> CallToolResult:
         """Get one operation by its capability ID."""
         try:
-            return tool_result(service.capability(capability_id))
+            return tool_result(capability_descriptor(capability_id))
         except IntelligenceError as exc:
             return tool_result({"ok": False, "error": exc.public()})
 
@@ -88,11 +84,7 @@ def create_server(
         try:
             descriptor = service.model(model_id)
             if descriptor["provider_id"] == "openai":
-                import asyncio
-
-                async with asyncio.timeout(settings.health_timeout_seconds):
-                    await providers["openai"].health_model(service.models[model_id].provider_model)
-                descriptor["available"] = True
+                descriptor = await service.model_available(model_id)
             return tool_result(descriptor)
         except IntelligenceError as exc:
             return tool_result({"ok": False, "error": exc.public()})
