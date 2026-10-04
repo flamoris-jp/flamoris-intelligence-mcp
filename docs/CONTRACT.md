@@ -2,8 +2,7 @@
 
 Version: package 0.1.0. Owning specification: [Issue #3](https://github.com/flamoris-jp/flamoris-intelligence-mcp/issues/3).
 
-This synchronous contract is intended for raw LLM use by clients, including Studio
-and a future Agent execution adapter. It has no conversation/job/session database,
+This synchronous contract is the external MCP contract for raw LLM use, primarily through `ChatGPT -> MCP Hub -> Intelligence MCP`. It has no conversation/job/session database,
 memory, tool loop, generated assets, or runtime switching API. Protocol sessions
 are not Agent conversations. Hub routing must preserve the upstream arguments,
 structured result, and MCP `isError` flag.
@@ -96,8 +95,7 @@ not independently audited billing data. Additional provider fields, IDs, model
 paths, timings, internal reasoning, and raw errors are not copied into results.
 
 The execution ID is only correlation metadata; there is no polling/retrieval API
-or durable output store. Studio owns its user-scoped product state, and Agent owns
-its conversations/memory. Neither should manufacture an upstream persistent job.
+or durable output store. Internal Studio and Agent state remain owned by those components. They do not use this MCP contract as their canonical internal execution dependency, and no caller should manufacture an upstream persistent job.
 
 ## Error result
 
@@ -172,12 +170,10 @@ prompts, generated text, or credentials. Do not enable wire/debug logging for pr
 
 ## Downstream gates
 
-- Hub integration: after this contract is reviewed and merged, create the owning Hub
-  Issue and add a lazy catalog. Do not implement inference orchestration in Hub.
-- Studio: [#2](https://github.com/flamoris-jp/flamoris-studio/issues/2) after merge;
-  retain `IIntelligenceGateway` and user isolation. No direct llama.cpp calls.
-- Agent: Track C consumes this boundary only after its baseline/client boundary is
-  stable. Agent keeps all identity, conversation, knowledge, and memory authority.
+- MCP Hub integration may expose this exact external contract under an `intelligence.*` namespace.
+- Internal Studio and AI Agent execution must use non-MCP interfaces. Do not add or preserve `Studio -> Intelligence MCP` or `Agent -> Intelligence MCP` as target dependency directions.
+- Existing provider bounds, no-retry semantics, privacy, errors, usage normalization and cancellation behavior remain requirements for the external MCP facade.
+- Any future external capability that reaches AI Agent must use a separately reviewed internal call and must not make Agent state part of this MCP process.
 
 Upstream references: [official MCP SDK](https://github.com/modelcontextprotocol/python-sdk)
 and [llama.cpp server API](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md).

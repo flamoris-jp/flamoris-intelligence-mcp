@@ -1,11 +1,11 @@
 # Configured OpenAI Responses
 
-Owning scope: #8 and flamoris-ai#17, consumed by Agent#35 and Studio#56.
+Owning scope: Intelligence MCP external OpenAI provider adapter. FLAMORIS AI #18 supersedes the earlier assumption that Agent or Studio consume this adapter through internal MCP calls.
 
 The existing six MCP tools remain unchanged. `ModelEntry.provider_id` defaults to
 `llamacpp` and explicitly supports `openai`. Both providers can coexist; no runtime
 switch/fallback is made. Discovery gives configured public IDs, not provider aliases,
-URLs, keys or filesystem paths. Agent remains the conversation/context/export owner.
+URLs, keys or filesystem paths. This MCP owns no conversation/personality state. Internal Agent/Studio remote-provider selection and context-export policy belong to their non-MCP execution boundaries.
 
 The OpenAI adapter uses the fixed `https://api.openai.com/v1/responses` endpoint.
 Its stateless text request supplies model, input, instructions, max_output_tokens,
@@ -44,8 +44,7 @@ Input, JSON response, output text, timeout and concurrency use existing Settings
 Capacity is per provider so a running/offline local provider does not reserve API
 capacity. At most two configured provider budgets exist per process. Health reports
 providers independently; `models.get` also performs a bounded free authenticated
-GET model check for OpenAI. Agent requires that exact-model availability, rather
-than assuming all aliases are usable from general provider health. GET probes send
+GET model check for OpenAI. External MCP callers may use exact-model availability rather than assuming all aliases are usable from general provider health. GET probes send
 no personality, transcript or Studio draft and perform no inference.
 
 No redirects, environment proxies or retries. Transport close/cancel frees local
@@ -58,3 +57,8 @@ is zero. Follow the configured account's provider privacy terms.
 Normal tests use httpx mocks and synthetic text only. Deployment, real keys, grants,
 paid smoke and local-GPU/image coexistence acceptance remain separate. Docker uses
 the same configuration; no new dependency or GPU library is needed.
+
+
+## Boundary correction
+
+This adapter remains valid for external MCP use of OpenAI Responses API. It is **not** the canonical internal API provider for AI Agent or Studio. Do not route Agent personality/conversation traffic through Intelligence MCP merely to reuse this adapter. The internal execution adapter ownership is handled separately under AI Agent / AI Runtime design. No code removal is implied by this documentation-only change; implementation cleanup is a later reviewed step.

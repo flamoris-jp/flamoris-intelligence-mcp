@@ -1,163 +1,43 @@
 # AGENTS.md
 
-## Scope
+## Scope and current stage
 
-These instructions apply to the entire repository.
+This repository provides FLAMORIS's external intelligence MCP facade. Read README.md, docs/CONTRACT.md, docs/OPENAI_RESPONSES.md, CONTRIBUTING.md, SECURITY.md, [AI #18](https://github.com/flamoris-jp/flamoris-ai/issues/18) and [local #10](https://github.com/flamoris-jp/flamoris-intelligence-mcp/issues/10).
 
-This repository is for the FLAMORIS MCP-native intelligence gateway.
+The current pass is documentation review/fixes and explicitly authorized documentation merges. Do not start implementation, Work execution, provider calls, deployment or credential changes. Later Intelligence cleanup has priority; Generation Controller and Generation development remain deferred.
 
-**Current status:** Phase 1 implements a Python MCP runtime, configured model/capability discovery, and bounded synchronous llama.cpp inference. See `docs/CONTRACT.md`. Live deployment acceptance is separate from mock/CI validation. Do not describe future providers or downstream integration as implemented.
+## Authority
 
-## Core authority
+External path: ChatGPT -> MCP Hub -> Intelligence MCP -> the approved internal capability. Internal Studio, Agent and AI Runtime calls do not use MCP as their service dependency in the target design. Existing implementation/callers are not already migrated merely because these docs changed.
 
-Intelligence MCP may own:
+Keep external tool schemas, transport validation, provider-neutral request/result mapping, model/capability projections and bounded diagnostics here. Current provider adapters remain an as-built implementation until their reusable non-MCP ownership is reviewed. Do not delete valid external provider behavior solely to remove internal clients, or copy it into every caller by default.
 
-- provider-neutral intelligence request/result contracts;
-- MCP-facing intelligence tools/resources;
-- provider adapters;
-- provider/model capability metadata;
-- routing decisions;
-- bounded execution/task metadata needed to fulfill intelligence requests, including limited coordination within a request;
-- intelligence-specific health and diagnostics.
+Do not own durable Agent conversations/personality/memory/policy, generation jobs/inputs/assets, product documents, host runtime switching or generic shared infrastructure. Agent is optional personality, not an obligatory raw-inference layer. Generation MCP and Intelligence MCP are parallel external facades, not an internal bus.
 
-Intelligence MCP must not silently become the authority for:
+## Terminology and truthful documentation
 
-- conversations, persistent memory, Agent prompts, or Agent policy;
-- generative-media jobs, workflows, or assets;
-- FLAMORIS product documents or editing state;
-- generic MCP/logging/security infrastructure that belongs in FLAMORIS Commons.
+Use ExecuteFlow for Runtime inference flow, preserve ExecutionPlan for its compiled representation, and use ComfyWorkFlow only for ComfyUI graphs/JSON. Avoid bare Workflow as a new FLAMORIS architecture term. Preserve real code/API/configuration/path spelling in current-implementation references. Do not introduce unimplemented environment variables or claim old clients were removed by a documentation PR.
 
-## Architecture principles
+## Provider design and privacy
 
-1. **MCP-facing contracts stay provider-neutral where practical**
-   - Keep vendor/model/runtime-specific APIs behind adapters.
-   - Do not expose raw provider APIs merely because doing so is easier.
-   - When a provider-specific capability is intentionally public, name and scope it explicitly.
+Keep vendor/model details behind narrow adapters and expose provider-specific capabilities explicitly when a common contract cannot represent them. Do not add speculative frameworks, automatic provider selection, hidden fallback or task loops outside the reviewed tool contract.
 
-2. **Do not invent abstractions before providers prove the need**
-   - Start from real provider integrations.
-   - Prefer a small explicit adapter over a speculative universal framework.
-   - Generalize only behavior demonstrated by multiple implementations or clearly required by the public contract.
+Bound input/context/output, concurrent requests, time, retries, filesystem/network access and resources. Preserve fixed safe errors and metadata. Cancellation/disconnect does not prove remote work stopped or was not billed. Do not replay uncertain inference.
 
-3. **No Agent-memory ownership**
-   - Execution context may be passed into a request.
-   - Do not persist conversations, user memory, Agent policy, or knowledge state as hidden side effects.
-   - Any caching must be clearly distinguished from durable Agent state.
+Credentials remain operator configuration. Never commit/log/return keys, tokens, passwords, cookies, private keys or deployment identifiers. Prompts, code and context may be private; remote data flow must be explicit. Responses are untrusted and grant no paths, commands or execution permissions. No hidden durable conversation storage or silent export of local-only history.
 
-4. **No media-generation ownership**
-   - Image, video, music, and voice generation belongs to `flamoris-generation-mcp`.
-   - Do not reproduce Generation MCP's workflow/job/asset authority.
+## Integration
 
-5. **Bounded execution**
-   - Bound context/input sizes, outputs, concurrency, timeouts, retries, filesystem access, network access, and resource use.
-   - Make cancellation semantics explicit when introduced.
-   - Do not automatically retry non-idempotent or side-effecting provider operations after ambiguous failures.
+Agent retains identity, principal/session, conversation and export authorization. Any future external Agent capability must use an explicit internal contract without absorbing Agent state. Products retain editing/document authority. Host lifecycle stays in GPU Node Manager. Reuse appropriate Commons foundations without creating reverse dependencies or duplicating domain authority.
 
-6. **Inspectable routing**
-   - Routing should be deterministic where requirements make that possible.
-   - Record enough metadata to diagnose provider/model selection without leaking secrets.
-   - Avoid hidden fallback chains that make behavior impossible to explain.
+## Change and test discipline
 
-7. **Local-first, not local-only**
-   - Local models are first-class providers.
-   - Remote providers may be supported behind the same explicit boundary.
-   - Do not hard-code developer machine names, private hostnames, tunnel IDs, or personal network topology.
+Read actual current source/tests and owning Issues before any later cleanup. Inventory internal-only coupling, retained external tools, model identity checks and operational compatibility. Removing unnecessary translation must not remove authorization/provenance checks still needed by the retained contract. A working non-MCP replacement and explicit unavailable behavior must be specified before deleting a currently used path.
 
-8. **Human-authoritative**
-   - AI-assisted development is welcome.
-   - Humans remain responsible for architecture, security, licensing, compatibility, and release decisions.
+Use focused commits, inspect rendered text and diffs, preserve source history and acceptance evidence, and merge only with user authorization. Normal CI uses fake providers without paid APIs, private credentials, GPUs or weights. Test validation, routing, normalization, transport, limits and rejection behavior. Report actual CI separately from live acceptance.
 
-## Integration boundaries
+New provider work requires separately scoped verification of its real request/result contract, configuration, limits, cancellation, data flow and licenses. None is started here.
 
-### `flamoris-ai-agent`
+## Licensing and support
 
-Owns persistent Agent-facing state such as conversations, memory, knowledge context, prompts, tools, and Agent policy.
-
-Intelligence MCP should accept only the context needed for execution and should not silently retain it as Agent memory.
-
-### `flamoris-generation-mcp`
-
-Owns generative-media and closely related media-analysis execution, workflows, jobs, and assets.
-
-Keep the two MCP surfaces conceptually parallel but domain-separated.
-
-### Product repositories
-
-Products remain authoritative for project/document state and editing behavior.
-
-If Intelligence MCP later exposes coding or product-assistance capabilities, they must interact through explicit product/tool contracts rather than bypass product authority.
-
-### FLAMORIS Commons
-
-Reuse shared MCP/logging/security foundations when an appropriate stable package exists.
-
-Do not duplicate generic infrastructure merely to keep this repository self-contained.
-
-## Provider credentials and privacy
-
-Never commit, log, or return:
-
-- API keys;
-- access tokens;
-- passwords;
-- private keys;
-- authentication cookies;
-- provider secrets;
-- private tunnel/deployment identifiers.
-
-Treat prompts, code, files, repository contents, and tool context as potentially private.
-
-Before sending data to a remote provider, the runtime contract should make that data flow explicit.
-
-Provider responses are untrusted input and must be validated before being used as paths, URLs, commands, tool arguments, or structured control data.
-
-## Development workflow
-
-Before implementing a substantial change:
-
-- read README.md, this file, CONTRIBUTING.md, and SECURITY.md;
-- read the relevant Issue/design document;
-- inspect `flamoris-ai`, `flamoris-ai-agent`, and `flamoris-generation-mcp` boundaries;
-- inspect current code/tests before proposing abstractions;
-- identify provider-specific vs provider-neutral responsibilities;
-- keep changes scoped to the Issue;
-- update public documentation when tools, transports, providers, or behavior change.
-
-For a new provider, document:
-
-- capability mapping;
-- credential/configuration requirements;
-- request/result normalization;
-- cancellation and timeout behavior;
-- rate/resource limits;
-- privacy/data-flow implications;
-- license/terms constraints that affect integration.
-
-## Testing and CI
-
-Normal CI must not require:
-
-- paid provider access;
-- live private API keys;
-- a live GPU;
-- local model weights;
-- private source repositories or datasets.
-
-Use fake/mock providers for normal tests.
-
-Add focused tests for validation, routing, provider adapters, error mapping, bounded resources, and rejection paths.
-
-If transport behavior is introduced, test protocol behavior without depending on a personal tunnel or deployment environment.
-
-## Licensing
-
-Unless stated otherwise, code and documentation are licensed under Apache License 2.0.
-
-Do not add third-party code, models, weights, datasets, prompts, media, generated assets, or provider material unless their licenses and redistribution terms are compatible and clearly documented.
-
-## Support
-
-FLAMORIS does not provide guaranteed individual support.
-
-Repository documentation, Issues, tests, logs, and source code are the primary support references. AI-assisted self-support is encouraged.
-
+Code and documentation are Apache-2.0 unless stated otherwise. Do not add third-party code/models/weights/data/media without compatible documented terms. FLAMORIS offers no guaranteed individual support; documentation, Issues, tests, logs and source are primary references.
