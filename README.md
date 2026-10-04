@@ -164,7 +164,7 @@ AI Agent does not use Intelligence MCP as its canonical internal execution depen
 
 [flamoris-generation-mcp](https://github.com/flamoris-jp/flamoris-generation-mcp) is the external MCP facade for generative-media capabilities. Generation-domain ownership is being separated under FLAMORIS AI #18; do not infer internal MCP dependencies from this documentation.
 
-Intelligence MCP is deliberately separate from image, video, music, voice, and media-domain analysis that participates in Generation MCP's workflow/job/asset lifecycle.
+Intelligence MCP is deliberately separate from image, video, music, voice, and media-domain analysis that participates in the generation-definition/job/asset lifecycle.
 
 ### Product repositories
 
@@ -248,7 +248,7 @@ MCP Hubへの組み込みはこの外部MCP contractを利用します。Studio 
 - **Conversation / Memory / Prompt / Agent policy**  
   → `flamoris-ai-agent`
 
-- **画像・動画・音楽・音声のgeneration、および密接なmedia-domain analysisのworkflow / job / asset**  
+- **画像・動画・音楽・音声のgeneration、および密接なmedia-domain analysisのgeneration definition / job / asset**  
   → `flamoris-generation-mcp`
 
 - **2D / Cutwork / Kachinco / Studioなどの制作データ**  
