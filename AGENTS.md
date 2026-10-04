@@ -4,13 +4,13 @@
 
 This repository provides FLAMORIS's external intelligence MCP facade. Read README.md, docs/CONTRACT.md, docs/OPENAI_RESPONSES.md, CONTRIBUTING.md, SECURITY.md, [AI #18](https://github.com/flamoris-jp/flamoris-ai/issues/18) and [local #10](https://github.com/flamoris-jp/flamoris-intelligence-mcp/issues/10).
 
-The current pass is documentation review/fixes and explicitly authorized documentation merges. Do not start implementation, Work execution, provider calls, deployment or credential changes. Later Intelligence cleanup has priority; Generation Controller and Generation development remain deferred.
+The user has authorized architecture implementation. The reusable non-MCP provider namespace and external facade may be changed within that scope. Do not perform live provider calls, deployment or credential changes without operational authorization. Generation Controller implementation remains deferred.
 
 ## Authority
 
 External path: ChatGPT -> MCP Hub -> Intelligence MCP -> the approved internal capability. Internal Studio, Agent and AI Runtime calls do not use MCP as their service dependency in the target design. Existing implementation/callers are not already migrated merely because these docs changed.
 
-Keep external tool schemas, transport validation, provider-neutral request/result mapping, model/capability projections and bounded diagnostics here. Current provider adapters remain an as-built implementation until their reusable non-MCP ownership is reviewed. Do not delete valid external provider behavior solely to remove internal clients, or copy it into every caller by default.
+Keep external tool schemas, transport validation, provider-neutral request/result mapping, model/capability projections and bounded diagnostics here. Provider adapters and bounds live in `flamoris_intelligence`; the optional facade owns MCP mapping only. Read docs/INTERNAL_EXECUTION.md for the shared direct contract. Do not delete valid external provider behavior solely to remove internal clients, or copy it into every caller by default.
 
 Do not own durable Agent conversations/personality/memory/policy, generation jobs/inputs/assets, product documents, host runtime switching or generic shared infrastructure. Agent is optional personality, not an obligatory raw-inference layer. Generation MCP and Intelligence MCP are parallel external facades, not an internal bus.
 
