@@ -1,12 +1,12 @@
 # FLAMORIS Intelligence MCP
 
-MCP-native, provider-neutral intelligence gateway for FLAMORIS.
+MCP-native, provider-neutral **external intelligence facade** for FLAMORIS.
 
 **Status: Phase 1 Python runtime implemented and mock-tested. Live deployment acceptance remains a separate check.**
 
 Part of the [FLAMORIS AI](https://github.com/flamoris-jp/flamoris-ai) family.
 
-FLAMORIS Intelligence MCP is intended to expose language, reasoning, coding, and related intelligence capabilities through a stable MCP boundary while keeping local and remote model/provider details behind adapters.
+FLAMORIS Intelligence MCP exposes language, reasoning, coding, and related intelligence capabilities to external MCP clients through a stable boundary while keeping local and remote model/provider details behind adapters. Its primary FLAMORIS path is `ChatGPT -> MCP Hub -> Intelligence MCP`.
 
 It is not the persistent Agent, not the generative-media gateway, and not the owner of FLAMORIS product documents.
 
@@ -137,31 +137,32 @@ provider-independent health, HTTP discovery, and restart without a GPU or weight
 ## Ecosystem boundaries
 
 ```text
-FLAMORIS application / Studio
-          │
-          ├──────────────► flamoris-intelligence-mcp
-          │                 language / reasoning / coding
-          │
-          └──────────────► flamoris-generation-mcp
-                            image / video / music / voice
+External MCP:
+ChatGPT
+   ↓
+MCP Hub
+   ↓
+flamoris-intelligence-mcp
+   ↓
+approved intelligence capability / provider
 
-flamoris-ai-agent
-          │
-          ├──────────────► flamoris-intelligence-mcp
-          └──────────────► flamoris-generation-mcp
+Internal FLAMORIS:
+Studio / AI Agent / AI Runtime
+   ↓
+non-MCP internal execution interfaces
 ```
 
-These are boundaries, not mandatory layers.
+MCP is an external adapter boundary, not the internal service bus for Studio, Agent, or AI Runtime.
 
 ### FLAMORIS AI Agent
 
 [flamoris-ai-agent](https://github.com/flamoris-jp/flamoris-ai-agent) is the persistent Agent authority for conversations, memory, knowledge context, prompts, tools, and long-lived agent behavior. Its bounded Agent MCP surface is already implemented; broader Agent capabilities continue to evolve there.
 
-Intelligence MCP may execute requests for the Agent, but must not silently become a second owner of Agent memory or conversation state.
+AI Agent does not use Intelligence MCP as its canonical internal execution dependency. Agent keeps a replaceable non-MCP execution boundary for local Runtime, API, or vendor-runtime targets. Intelligence MCP may expose an external Agent-related capability only through a separately reviewed internal call without becoming Agent state authority.
 
 ### FLAMORIS Generation MCP
 
-[flamoris-generation-mcp](https://github.com/flamoris-jp/flamoris-generation-mcp) owns generative-media and closely related media-analysis workflows, jobs, and assets.
+[flamoris-generation-mcp](https://github.com/flamoris-jp/flamoris-generation-mcp) is the external MCP facade for generative-media capabilities. Generation-domain ownership is being separated under FLAMORIS AI #18; do not infer internal MCP dependencies from this documentation.
 
 Intelligence MCP is deliberately separate from image, video, music, voice, and media-domain analysis that participates in Generation MCP's workflow/job/asset lifecycle.
 
@@ -169,7 +170,7 @@ Intelligence MCP is deliberately separate from image, video, music, voice, and m
 
 FLAMORIS 2D, Cutwork, Kachinco, Studio, and other applications remain authoritative for their own project/document state and editing behavior.
 
-Intelligence MCP may assist those products through explicit MCP contracts but must not maintain competing product state.
+Product applications do not use Intelligence MCP as their canonical internal provider gateway. External MCP clients may use this facade without transferring product-state authority.
 
 ### FLAMORIS Commons
 
@@ -177,9 +178,10 @@ Generic MCP foundations, logging, diagnostics, security primitives, and other no
 
 ## Design principles
 
-1. **MCP is the FLAMORIS-facing boundary**
-   - Applications and agents should consume stable intelligence capabilities instead of provider-specific APIs where practical.
-   - Provider details stay behind adapters.
+1. **MCP is the external ChatGPT-facing boundary**
+   - External MCP clients consume stable intelligence capabilities through MCP Hub / Intelligence MCP.
+   - Internal Studio, Agent, and AI Runtime dependencies use non-MCP interfaces.
+   - Provider details used by this MCP stay behind its adapters.
 
 2. **Provider-neutral does not mean lowest-common-denominator**
    - Define shared contracts where behavior is genuinely common.
@@ -239,7 +241,7 @@ local modelとremote providerの違いをadapterの内側へ閉じ込め、FLAMO
 - 将来: Issueで定義されたproviderや実行機能の追加
 
 公開契約は [docs/CONTRACT.md](docs/CONTRACT.md) を参照してください。
-Hub/Studioへの組み込みは契約のレビュー・マージ後です。
+MCP Hubへの組み込みはこの外部MCP contractを利用します。Studio / AI Agentの内部実行経路はMCPを使わず、別の内部interfaceを利用します。
 
 ### 担当しないもの
 
@@ -259,3 +261,8 @@ Hub/Studioへの組み込みは契約のレビュー・マージ後です。
 このリポジトリのコードとドキュメントは、明記がない限りApache License 2.0です。
 
 AI model、model weights、dataset、provider-hosted asset、第三者由来prompt、生成outputなどには別のライセンスや利用条件が適用される場合があります。それぞれ確認してください。
+
+
+## Architecture correction status
+
+FLAMORIS AI #18 supersedes the earlier internal-consumer direction. The current implementation may still contain provider adapters and historical downstream assumptions, but new internal Agent/Studio dependencies must not be added. The next implementation phase should remove internal MCP-specific coupling first, while preserving this repository's external MCP tools, bounds, privacy controls, and provider behavior.
