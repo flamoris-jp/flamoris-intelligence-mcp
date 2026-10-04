@@ -14,6 +14,7 @@ from .contracts import (
     ProviderResult,
     Usage,
 )
+from .privacy import private_transport
 
 
 class LlamaCppProvider:
@@ -36,6 +37,10 @@ class LlamaCppProvider:
         await self.client.aclose()
 
     async def _json(self, method: str, path: str, timeout: float, payload=None):
+        with private_transport():
+            return await self._request_json(method, path, timeout, payload)
+
+    async def _request_json(self, method: str, path: str, timeout: float, payload=None):
         try:
             async with asyncio.timeout(timeout):
                 async with self.client.stream(method, path, json=payload) as response:

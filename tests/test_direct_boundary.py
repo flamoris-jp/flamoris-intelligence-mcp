@@ -199,3 +199,40 @@ import asyncio
 asyncio.run(service.close())
 """
     subprocess.run([sys.executable, "-c", script], check=True, capture_output=True)
+
+
+async def test_direct_transport_redacts_private_diagnostics_without_muting_other_tasks(caplog):
+    import logging
+
+    caplog.set_level(logging.DEBUG)
+    entered, release = asyncio.Event(), asyncio.Event()
+
+    async def provider(request):
+        logging.getLogger("httpcore.connection").debug("private-host secret-body")
+        entered.set()
+        await release.wait()
+        return httpx.Response(200, content=b'{"secret-prompt":"private-body"}')
+
+    service = create_service(
+        settings(provider_url="http://localhost/private-endpoint"),
+        transport=httpx.MockTransport(provider),
+    )
+    task = asyncio.create_task(service.model_available("public-model"))
+    try:
+        await asyncio.wait_for(entered.wait(), 1)
+        logging.getLogger("httpx").info("unrelated transport event")
+        release.set()
+        with pytest.raises(IntelligenceError):
+            await task
+        assert "unrelated transport event" in caplog.text
+        for secret in (
+            "private-host",
+            "secret-body",
+            "secret-prompt",
+            "private-body",
+            "private-endpoint",
+        ):
+            assert secret not in caplog.text
+    finally:
+        task.cancel()
+        await service.close()
