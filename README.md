@@ -8,7 +8,7 @@ Target external path: **ChatGPT -> MCP Hub -> Intelligence MCP -> approved inter
 
 The current Python implementation exposes six tools: `system.health`, `capabilities.list/get`, `models.list/get` and synchronous `inference.execute`. It includes the llama.cpp adapter and configured opt-in [OpenAI Responses adapter](docs/OPENAI_RESPONSES.md). It stores no durable Agent conversation/memory and does not start/stop GPU runtimes. Actual provider/model availability and deployment acceptance are separate from code and offline tests.
 
-[AI #18](https://github.com/flamoris-jp/flamoris-ai/issues/18) and [local #10](https://github.com/flamoris-jp/flamoris-intelligence-mcp/issues/10) supersede the old internal-gateway architecture. The shared provider adapters and validation now live behind a [non-MCP execution contract](docs/INTERNAL_EXECUTION.md). External schemas and tools remain unchanged; no live configuration or provider deployment was changed. Generation Controller remains unimplemented.
+[AI #18](https://github.com/flamoris-jp/flamoris-ai/issues/18) and [local #10](https://github.com/flamoris-jp/flamoris-intelligence-mcp/issues/10) supersede the old internal-gateway architecture. The shared provider adapters and validation now live behind a [non-MCP execution contract](docs/INTERNAL_EXECUTION.md). External schemas and tools remain unchanged; no live configuration or provider deployment was changed. Generation Controller is implemented in its owning repository; accepted source and pending live rollout are recorded in [AI progress](https://github.com/flamoris-jp/flamoris-ai/blob/main/PROGRESS.md).
 
 ## Contracts and boundaries
 
@@ -16,7 +16,7 @@ Read [CONTRACT.md](docs/CONTRACT.md) for current request/result schemas, limits,
 
 Agent owns optional personality, conversation/memory, principal/session and context/export policy. An external personality capability may reach Agent through a separately reviewed internal call; raw inference does not require it. Agent and Studio reuse the importable stateless provider boundary. This adds no central network gateway and does not move user conversation or authorization state into the shared adapters.
 
-Generation MCP is a separate external facade. Generation-domain requests, jobs, references and assets do not belong here; future Controller ownership is deferred under AI #18. ComfyWorkFlow means ComfyUI graph/JSON, ExecuteFlow means Runtime inference flow, and the existing compiled ExecutionPlan remains distinct. None is an obligatory layer for an ordinary API call.
+Generation MCP is a separate external facade. Generation-domain requests, jobs, references and assets do not belong here; the implemented shared Controller owns that domain under AI #18, independently of Intelligence. ComfyWorkFlow means ComfyUI graph/JSON, ExecuteFlow means Runtime inference flow, and the existing compiled ExecutionPlan remains distinct. None is an obligatory layer for an ordinary API call.
 
 Products retain their own document/editing state. GPU Node Manager retains host-wide lifecycle control. Generic MCP/logging/security foundations belong in Commons or dedicated shared packages. No component acquires domain authority merely because it provides a transport.
 
@@ -86,7 +86,7 @@ Normal tests use fakes and do not require GPUs, weights, paid APIs or secrets. T
 
 Intelligence MCPはChatGPTがMCP Hub経由で使う外部入口です。Studio/Agent/Runtime内部の共通Gatewayにはしません。非MCPの共有実行境界 `flamoris_intelligence` を実装しました。実機の切替は別途行います。
 
-共有adapterは順序付きのsystem/user/assistantメッセージ、明示したmodel、上限、固定エラーを扱います。Agent/Studioの認可・会話・外部送信同意は呼び出し元に残します。外部MCP、既存providerの有効な処理、認可・上限・秘匿・不確定結果の扱いまで消す指示ではありません。Generation Controllerはまだ実装しません。
+共有adapterは順序付きのsystem/user/assistantメッセージ、明示したmodel、上限、固定エラーを扱います。Agent/Studioの認可・会話・外部送信同意は呼び出し元に残します。外部MCP、既存providerの有効な処理、認可・上限・秘匿・不確定結果の扱いまで消す指示ではありません。Generation Controllerは担当リポジトリでmain受け入れ済みです。Intelligenceの責務は増やさず、実機反映は別工程です。
 
 ## Policy and license
 
