@@ -4,7 +4,7 @@
 
 This repository provides FLAMORIS's external intelligence MCP facade. Read README.md, docs/CONTRACT.md, docs/OPENAI_RESPONSES.md, CONTRIBUTING.md, SECURITY.md, [AI #18](https://github.com/flamoris-jp/flamoris-ai/issues/18) and [local #10](https://github.com/flamoris-jp/flamoris-intelligence-mcp/issues/10).
 
-The user has authorized architecture implementation. The reusable non-MCP provider namespace and external facade may be changed within that scope. Do not perform live provider calls, deployment or credential changes without operational authorization. Generation Controller implementation remains deferred.
+The user has authorized architecture implementation. The reusable non-MCP provider namespace and external facade may be changed within that scope. Do not perform live provider calls, deployment or credential changes without operational authorization. Generation Controller is implemented in its owning repository; accepted source and pending live rollout are recorded in [AI progress](https://github.com/flamoris-jp/flamoris-ai/blob/main/PROGRESS.md).
 
 ## Authority
 
