@@ -1,0 +1,34 @@
+name: Build reviewed v1 release candidate
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: f791bf236342e7c831e4d0291709bacb2f0e54bc
+      - name: Verify exact reviewed source
+        run: test "$(git rev-parse HEAD)" = "f791bf236342e7c831e4d0291709bacb2f0e54bc"
+      - name: Build candidate image
+        run: docker build --pull --tag flamoris-intelligence-mcp:1.0.0 .
+      - name: Import smoke
+        run: docker run --rm --entrypoint python flamoris-intelligence-mcp:1.0.0 -c "import flamoris_intelligence_mcp.server"
+      - name: Export immutable candidate
+        shell: bash
+        run: |
+          mkdir -p candidate
+          docker image inspect --format '{{.Id}}' flamoris-intelligence-mcp:1.0.0 > candidate/image-id.txt
+          docker save flamoris-intelligence-mcp:1.0.0 | gzip -n -9 > candidate/flamoris-intelligence-mcp-1.0.0-linux-amd64.docker.tar.gz
+          sha256sum candidate/flamoris-intelligence-mcp-1.0.0-linux-amd64.docker.tar.gz > candidate/SHA256SUMS
+          printf '%s\n' '{"format_version":1,"application":"flamoris-intelligence-mcp","release":"1.0.0","platform":"linux/amd64","source_revision":"f791bf236342e7c831e4d0291709bacb2f0e54bc"}' > candidate/provenance.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flamoris-intelligence-mcp-1.0.0-linux-amd64
+          path: candidate/
+          retention-days: 3
