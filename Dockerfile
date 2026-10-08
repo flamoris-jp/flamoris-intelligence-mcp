@@ -13,8 +13,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 COPY --from=build /wheels /wheels
 COPY docker-requirements.txt /tmp/docker-requirements.txt
-RUN python -m pip install --no-cache-dir --no-index --find-links=/wheels \
-      -r /tmp/docker-requirements.txt /wheels/flamoris_intelligence_mcp-*.whl \
+RUN python -m pip install --no-cache-dir --no-index --no-deps /wheels/*.whl \
     && rm -rf /wheels /tmp/docker-requirements.txt \
     && mkdir /app
 

@@ -5,6 +5,7 @@ import time
 import uuid
 from decimal import Decimal
 
+from flamoris_update_core.admission import guarded, register_boot
 from pydantic import ValidationError
 
 from ._version import __version__
@@ -20,6 +21,7 @@ from .contracts import (
 
 class IntelligenceService:
     def __init__(self, settings: Settings, provider: Provider):
+        register_boot("flamoris-intelligence-mcp")
         self.settings = settings
         self.provider = provider
         self.providers = provider if isinstance(provider, dict) else {"llamacpp": provider}
@@ -150,6 +152,13 @@ class IntelligenceService:
     async def execute_messages(self, raw: dict):
         return await self._execute(raw, self.validate_messages)
 
+    @guarded(
+        rejection=lambda: {
+            "ok": False,
+            "execution_id": str(uuid.uuid4()),
+            "error": {"code": "maintenance"},
+        }
+    )
     async def _execute(self, raw: dict, validate):
         execution_id = str(uuid.uuid4())
         started = time.monotonic()

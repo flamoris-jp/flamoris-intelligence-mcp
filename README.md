@@ -93,3 +93,8 @@ Intelligence MCPはChatGPTがMCP Hub経由で使う外部入口です。Studio/A
 Follow the [FLAMORIS repository policy](https://github.com/flamoris-jp/flamoris-commons/blob/main/docs/repository-policy.md). Keep provider-specific behavior explicit where it cannot honestly fit a common contract, preserve bounded execution, and do not add hidden routing or fallback.
 
 Code and documentation are licensed under [Apache License 2.0](LICENSE), unless otherwise noted. Model weights, datasets, provider assets, third-party prompts and generated output may have separate terms. Software is provided as-is without guaranteed individual support; repository documents, Issues, tests and source are the primary self-support references.
+
+## Updater entry release 1.0.0
+
+See [Updater compatibility](docs/UPDATER.md) for the implemented admission/Owner
+contract and pending signed release/private provisioning/real-host acceptance.
