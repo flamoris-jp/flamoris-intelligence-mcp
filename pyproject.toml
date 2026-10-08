@@ -4,18 +4,19 @@ build-backend = "hatchling.build"
 
 [project]
 name = "flamoris-intelligence-mcp"
-version = "0.2.0"
+version = "1.0.0"
 description = "Bounded intelligence provider adapters with an optional external MCP facade"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.11"
-dependencies = ["httpx>=0.28,<1", "pydantic>=2.11,<3"]
+dependencies = ["flamoris-update-core[owner] @ https://github.com/flamoris-jp/flamoris-updater/archive/d9f010a92ff6e8a1e7a3b7fad8817850bdfb72cd.zip#subdirectory=packages/update-core", "httpx>=0.28,<1", "pydantic>=2.11,<3"]
 
 [project.optional-dependencies]
 mcp = ["mcp>=2.2,<3", "httpx2>=2.13,<3"]
 dev = ["mcp>=2.2,<3", "httpx2>=2.13,<3", "pytest>=8,<10", "pytest-asyncio>=1,<2", "ruff>=0.14,<1", "build>=1.2,<2"]
 
 [project.scripts]
+flamoris-intelligence-mcp-update-owner = "flamoris_intelligence.updater:main"
 flamoris-intelligence-mcp = "flamoris_intelligence_mcp.server:main"
 
 [tool.hatch.build.targets.wheel]
@@ -31,3 +32,6 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.hatch.metadata]
+allow-direct-references = true

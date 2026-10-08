@@ -102,3 +102,6 @@ typing-inspection==0.4.4
     #   pydantic
 uvicorn==0.54.0
     # via mcp
+
+# MCP-independent Updater SDK, pinned source.
+flamoris-update-core[owner] @ https://github.com/flamoris-jp/flamoris-updater/archive/d9f010a92ff6e8a1e7a3b7fad8817850bdfb72cd.zip#subdirectory=packages/update-core

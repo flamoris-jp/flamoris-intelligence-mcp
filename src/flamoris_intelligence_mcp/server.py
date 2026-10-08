@@ -111,6 +111,8 @@ def create_server(
 
 
 def main(argv: list[str] | None = None):
+    from flamoris_update_core.admission import wait_for_admission
+
     parser = argparse.ArgumentParser(description="FLAMORIS Intelligence MCP")
     parser.add_argument("--transport", choices=("stdio", "streamable-http"))
     parser.add_argument("--host", dest="http_host", choices=("127.0.0.1", "::1"))
@@ -118,6 +120,7 @@ def main(argv: list[str] | None = None):
     parser.add_argument("--mcp-path")
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args(argv)
+    wait_for_admission("flamoris-intelligence-mcp")
     try:
         settings = Settings.from_env(**vars(args))
     except ValueError as exc:
