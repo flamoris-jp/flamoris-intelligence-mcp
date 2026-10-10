@@ -1,0 +1,74 @@
+{
+  "application_id": "flamoris-intelligence-mcp",
+  "sql_files": [],
+  "recipe": {
+    "application_id": "flamoris-intelligence-mcp",
+    "release": "1.0.1",
+    "platform": "linux/amd64",
+    "compatible_from": [],
+    "dependencies": {},
+    "settings": [
+      {
+        "key": "PORT",
+        "label": "待受ポート",
+        "default": "8767",
+        "secret": false,
+        "required": false,
+        "generate": false,
+        "kind": "port"
+      },
+      {
+        "key": "PROVIDER_URL",
+        "label": "既存llama.cppのURL",
+        "default": "http://127.0.0.1:8081",
+        "secret": false,
+        "required": false,
+        "generate": false,
+        "kind": "text"
+      },
+      {
+        "key": "MODELS_JSON",
+        "label": "公開モデルIDとprovider_modelのJSON",
+        "default": "[{\"id\":\"gpt-oss-20b\",\"provider_model\":\"gpt-oss-20b\"}]",
+        "secret": false,
+        "required": false,
+        "generate": false,
+        "kind": "text"
+      }
+    ],
+    "downloads": {},
+    "generated": {
+      "runtime.env": "FLAMORIS_INTELLIGENCE_HTTP_HOST=127.0.0.1\nFLAMORIS_INTELLIGENCE_HTTP_PORT=${PORT}\nFLAMORIS_INTELLIGENCE_PROVIDER_URL=${PROVIDER_URL}\nFLAMORIS_INTELLIGENCE_MODELS=${MODELS_JSON}\n"
+    },
+    "application": {
+      "application_id": "flamoris-intelligence-mcp",
+      "release": "1.0.1",
+      "directories": [
+        {
+          "path": "${root}/config"
+        }
+      ],
+      "files": [
+        {
+          "source": {
+            "path": "${package}/runtime.env",
+            "digest": "generated",
+            "private": true
+          },
+          "destination": "${root}/config/runtime.env"
+        }
+      ],
+      "health_url": "http://127.0.0.1:${PORT}/healthz",
+      "kind": "docker",
+      "image_archive": {
+        "path": "${package}/image.tar",
+        "digest": "artifact",
+        "private": false
+      },
+      "image_id": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "container_name": "flamoris-intelligence-mcp",
+      "environment_file": "${root}/config/runtime.env",
+      "mounts": []
+    }
+  }
+}

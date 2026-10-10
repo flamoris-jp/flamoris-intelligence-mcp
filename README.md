@@ -94,7 +94,6 @@ Follow the [FLAMORIS repository policy](https://github.com/flamoris-jp/flamoris-
 
 Code and documentation are licensed under [Apache License 2.0](LICENSE), unless otherwise noted. Model weights, datasets, provider assets, third-party prompts and generated output may have separate terms. Software is provided as-is without guaranteed individual support; repository documents, Issues, tests and source are the primary self-support references.
 
-## Updater entry release 1.0.0
+## Updater installation
 
-See [Updater compatibility](docs/UPDATER.md) for the implemented admission/Owner
-contract and pending signed release/private provisioning/real-host acceptance.
+See [repository-owned distribution](docs/UPDATER.md) for release 1.0.1, its catalog and post-install configuration. Publication and actual-host acceptance remain separately verified.
