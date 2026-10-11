@@ -7,6 +7,8 @@ RUN python -m pip wheel --no-cache-dir --wheel-dir /wheels -r docker-requirement
     && python -m pip wheel --no-cache-dir --no-deps --wheel-dir /wheels ".[mcp]"
 
 FROM python:3.12-slim-bookworm
+LABEL org.opencontainers.image.title="flamoris-intelligence-mcp" \
+    org.opencontainers.image.version="1.0.2"
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLAMORIS_INTELLIGENCE_TRANSPORT=streamable-http
