@@ -186,3 +186,16 @@ async def test_two_http_clients_share_capacity():
             finally:
                 release.set()
             assert not (await running).is_error
+
+
+async def test_install_liveness_does_not_probe_or_execute_provider():
+    def unavailable(_request):
+        raise AssertionError("liveness must not contact a provider")
+
+    server = create_server(transport=httpx.MockTransport(unavailable))
+    app = server.streamable_http_app(stateless_http=True)
+    async with serve(app) as base:
+        async with httpx.AsyncClient(trust_env=False) as client:
+            response = await client.get(base + "/healthz", headers={"Host": "127.0.0.1:8767"})
+    assert response.status_code == 200
+    assert response.json() == {"healthy": True}

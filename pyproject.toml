@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "flamoris-intelligence-mcp"
-version = "1.0.1"
+version = "1.0.2"
 description = "Bounded intelligence provider adapters with an optional external MCP facade"
 readme = "README.md"
 license = { file = "LICENSE" }

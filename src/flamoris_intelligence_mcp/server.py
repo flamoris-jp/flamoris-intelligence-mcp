@@ -9,6 +9,8 @@ import httpx
 from mcp.server import MCPServer
 from mcp.types import CallToolResult, TextContent, ToolAnnotations
 from pydantic import Field
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 from flamoris_intelligence import create_service
 
@@ -48,6 +50,12 @@ def create_server(
     server = MCPServer(
         "FLAMORIS Intelligence", version=__version__, lifespan=lifespan, log_level="WARNING"
     )
+
+    @server.custom_route("/healthz", methods=["GET"])
+    async def live(_request: Request) -> JSONResponse:
+        """Process liveness only; startup must not require an available provider."""
+        return JSONResponse({"healthy": True})
+
     read_only = ToolAnnotations(
         readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False
     )
