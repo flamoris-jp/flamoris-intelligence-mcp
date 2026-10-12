@@ -96,4 +96,6 @@ Code and documentation are licensed under [Apache License 2.0](LICENSE), unless 
 
 ## Updater installation
 
-See [repository-owned distribution](docs/UPDATER.md) for release 1.0.1, its catalog and post-install configuration. Publication and actual-host acceptance remain separately verified.
+Before filling the form, read [input values and post-install setup](docs/FIRST_SETUP.md) for each field's purpose, value source, generation behavior and remaining app configuration.
+
+See [repository-owned distribution](docs/UPDATER.md) for release 1.0.2, its catalog and post-install configuration. Publication and actual-host acceptance remain separately verified.
